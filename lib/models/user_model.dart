@@ -2,8 +2,8 @@ class UserModel {
   final String id;
   final String firstName;
   final String lastName;
-  final String email;    // Must exist
-  final String phone;    // Must match the name in provider
+  final String email;    // Added
+  final String phone;    // Added
   final String section;
   final int points;
 
@@ -17,7 +17,6 @@ class UserModel {
     this.points = 0,
   });
 
-  // copyWith is essential for updating user points later
   UserModel copyWith({
     String? id,
     String? firstName,
