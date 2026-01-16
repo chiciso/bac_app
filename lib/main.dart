@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/routes/app_router.dart';
+import 'providers/auth_provider.dart';
+import 'pages/auth/login_page.dart';
+import 'pages/main_navigation_page.dart';
 
 void main() {
+  // ProviderScope is required for Riverpod to work
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -11,16 +14,32 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
+    // This listens to the authStatus we defined in auth_provider.dart
+    final authStatus = ref.watch(authProvider);
 
-    return MaterialApp.router(
-      title: 'Scenario Bac',
+    return MaterialApp(
+      title: 'Bac App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        useMaterial3: true,
         primarySwatch: Colors.blue,
+        useMaterial3: true,
       ),
-      routerConfig: router,
+      // Here is the logic switch
+      home: _getHome(authStatus),
     );
+  }
+
+  Widget _getHome(AuthStatus status) {
+    switch (status) {
+      case AuthStatus.authenticated:
+        return const MainNavigationPage();
+      case AuthStatus.loading:
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      case AuthStatus.unauthenticated:
+      default:
+        return const LoginPage();
+    }
   }
 }
