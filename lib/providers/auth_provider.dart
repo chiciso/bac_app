@@ -1,19 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../../models/user_model.dart';
-import '../../../core/constants/bac_sections.dart';
+import '../models/user_model.dart';
 
 /// 1. Auth States
+/// Defines the various stages of the authentication lifecycle.
 enum AuthStatus { initial, loading, authenticated, unauthenticated }
 
 /// 2. Current User Provider
-/// This holds the [UserModel] (FirstName, LastName, Points, Section)
-/// It is globally accessible so the Home Page knows which subjects to show.
+/// A simple StateProvider that stores the currently logged-in UserModel.
+/// It is set to null when no user is logged in.
 final currentUserProvider = StateProvider<UserModel?>((ref) => null);
 
 /// 3. Auth Notifier
-/// Handles the logic for Login, Logout, and Checking Session on startup.
+/// Contains the logic for login, registration, and session management.
 class AuthNotifier extends StateNotifier<AuthStatus> {
   final Ref _ref;
   final _storage = const FlutterSecureStorage();
@@ -22,25 +22,21 @@ class AuthNotifier extends StateNotifier<AuthStatus> {
     checkAuthStatus();
   }
 
-  /// Check if a user is already logged in when the app starts
+  /// Checks if a token exists in secure storage when the app launches.
   Future<void> checkAuthStatus() async {
     state = AuthStatus.loading;
     final token = await _storage.read(key: 'auth_token');
 
     if (token != null) {
-      // Simulation: Fetching user data from local storage or API
-      // In a real app, you'd fetch this via the token.
+      // Mocking a fetch of user data
       _ref.read(currentUserProvider.notifier).state = UserModel(
         id: "user_001",
         firstName: "Ahmed",
         lastName: "Ben Ali",
-        phoneNumber: "+216 22 123 456",
-        section: BacSections.science, // Default mock section
-        totalPoints: 1250,
-        subjectProgress: {
-          "math": 0.45,
-          "physic": 0.20,
-        },
+        email: "ahmed.ba@email.com",
+        phone: "+216 22 123 456",
+        section: "Sciences Expérimentales",
+        points: 1250,
       );
       state = AuthStatus.authenticated;
     } else {
@@ -48,39 +44,39 @@ class AuthNotifier extends StateNotifier<AuthStatus> {
     }
   }
 
-  /// Login Logic
+  /// Logic for logging in a user.
   Future<void> login(String email, String password) async {
     state = AuthStatus.loading;
 
-    // Simulate Network Delay
+    // Simulation: Replace this with your actual API call later.
     await Future.delayed(const Duration(seconds: 2));
 
-    // Mock Login Success
     await _storage.write(key: 'auth_token', value: 'mock_jwt_token_12345');
     
     _ref.read(currentUserProvider.notifier).state = UserModel(
       id: "user_001",
       firstName: "Ahmed",
       lastName: "Ben Ali",
-      phoneNumber: "+216 22 123 456",
-      section: BacSections.science,
-      totalPoints: 1250,
-      subjectProgress: {"math": 0.10},
+      email: email,
+      phone: "+216 22 123 456",
+      section: "Sciences Expérimentales",
+      points: 1250,
     );
 
     state = AuthStatus.authenticated;
   }
 
-  /// Registration Logic (Connects UI data to the state)
+  /// Logic for registering a new user.
   Future<void> registerUser({
     required String firstName,
     required String lastName,
+    required String email,
     required String phone,
     required String section,
   }) async {
     state = AuthStatus.loading;
 
-    // Simulate API call
+    // Simulation: Replace this with your actual API call later.
     await Future.delayed(const Duration(seconds: 2));
 
     await _storage.write(key: 'auth_token', value: 'mock_jwt_token_12345');
@@ -89,16 +85,16 @@ class AuthNotifier extends StateNotifier<AuthStatus> {
       id: "user_new",
       firstName: firstName,
       lastName: lastName,
-      phoneNumber: phone,
+      email: email,
+      phone: phone,
       section: section,
-      totalPoints: 0, // New users start at 0
-      subjectProgress: {},
+      points: 0, // New users start with 0 points
     );
 
     state = AuthStatus.authenticated;
   }
 
-  /// Logout Logic
+  /// Logic for logging out.
   Future<void> logout() async {
     await _storage.delete(key: 'auth_token');
     _ref.read(currentUserProvider.notifier).state = null;
@@ -107,6 +103,7 @@ class AuthNotifier extends StateNotifier<AuthStatus> {
 }
 
 /// 4. The Global Auth Provider
+/// This is what you will listen to in your UI.
 final authProvider = StateNotifierProvider<AuthNotifier, AuthStatus>((ref) {
   return AuthNotifier(ref);
 });

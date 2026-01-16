@@ -4,7 +4,7 @@ import '../providers/subject_provider.dart';
 import '../providers/auth_provider.dart';
 import '../pages/detail_page.dart';
 import 'subject_card.dart';
-import 'base_view.dart';
+import '../models/user_model.dart';
 
 class HomeContent extends ConsumerStatefulWidget {
   const HomeContent({super.key});
@@ -24,82 +24,75 @@ class _HomeContentState extends ConsumerState<HomeContent> {
   }
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final subjectsAsync = ref.watch(filteredSubjectsProvider);
     final user = ref.watch(currentUserProvider);
 
     return subjectsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => BaseView(state: ViewState.error, onRetry: () => ref.refresh(filteredSubjectsProvider), child: const SizedBox()),
+      error: (err, stack) => const Center(child: Text("Erreur de chargement")),
       data: (subjects) {
-        if (subjects.isEmpty) return const Center(child: Text("Aucune matière trouvée"));
-
+        if (subjects.isEmpty) return const Center(child: Text("Aucune donnée"));
         _activeColor ??= subjects.first.color;
 
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.decelerate,
+          duration: const Duration(milliseconds: 500),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                _activeColor!.withValues(alpha: 0.2), // The "Glow"
-                Colors.white.withValues(alpha: 0.9),
-                Colors.white,                   // Base color
-              ],
-              stops: const [0.0, 0.5, 1.0],
+              colors: [_activeColor!.withValues(alpha: 0.2), Colors.white],
+              stops: const [0.0, 0.6],
             ),
           ),
           child: SafeArea(
-            bottom: false,// Let the gradient flow under the bar
+            bottom: false, // Allows gradient to flow behind Nav Bar
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Welcome Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 70, 24, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("hey, ${user?.firstName ?? 'Étudiant'}", style: const TextStyle(color: Colors.grey, fontSize: 16)),
-                      Text(user?.section ?? "Bac Tunisien", style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-            
-                // Subject Carousel
+                _buildHeader(user),
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
                     itemCount: subjects.length,
-                    clipBehavior: Clip.none,
-                    onPageChanged: (index) => setState(() => _activeColor = subjects[index].color),
+                    onPageChanged: (i) => setState(() => _activeColor = subjects[i].color),
                     itemBuilder: (context, index) {
-                      final subject = subjects[index];
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         child: SubjectCard(
-                          subject: subject,
-                          progress: user?.getProgressFor(subject.id) ?? 0.0,
-                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetailPage(subject: subject))),
+                          subject: subjects[index],
+                          progress: 0.1, // Placeholder
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => DetailPage(subject: subjects[index])),
+                          ),
                         ),
                       );
                     },
                   ),
                 ),
-                const SizedBox(height: 80), // Ensures nothing is hidden by the bar
+                // FIXED: Smaller spacer to prevent overflow banner seen in video
+                const SizedBox(height: 70), 
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHeader(user) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Aslama, ${user?.firstName ?? 'Ahmed'}", 
+               style: const TextStyle(color: Colors.grey, fontSize: 16)),
+          Text(user?.section ?? "Sciences Expérimentales", 
+               style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }

@@ -1,83 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/auth_provider.dart';
+import '../providers/auth_provider.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // In real app: final user = ref.watch(userProvider);
-    // Hardcoded for UI demo:
-    final String fullName = "Ahmed Ben Ali";
-    final String phone = "+216 55 123 456";
-    final String section = "Mathématiques";
-    final int points = 1250;
+    final user = ref.watch(currentUserProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          // Avatar
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.grey.shade200,
-            child: const Icon(Icons.person, size: 50, color: Colors.grey),
-          ),
-          const SizedBox(height: 16),
-          
-          // Identity
-          Text(fullName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          Text(phone, style: const TextStyle(color: Colors.grey)),
-          
-          const SizedBox(height: 24),
-
-          // Stats Container
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(20),
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      body: SingleChildScrollView( // Prevents overflow on the profile page
+        child: Column(
+          children: [
+            const SizedBox(height: 60),
+            const CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage('https://via.placeholder.com/150'),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem("Section", section, Colors.blue),
-                _buildStatItem("Points", "$points", Colors.amber),
-                _buildStatItem("Rank", "#12", Colors.purple),
-              ],
+            const SizedBox(height: 16),
+            Text(
+              "${user?.firstName} ${user?.lastName}",
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-          ),
+            Text(
+              user?.email ?? "",
+              style: const TextStyle(color: Colors.grey),
+            ),
+            
+            // Stats Card (Points/Rank)
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStat("Section", user?.section ?? "-"),
+                    _buildStat("Points", "1250"),
+                    _buildStat("Rang", "#12"),
+                  ],
+                ),
+              ),
+            ),
 
-          const SizedBox(height: 32),
-          
-          // Settings Options
-          _buildOption(Icons.history, "Exam History", () {}),
-          _buildOption(Icons.edit, "Edit Profile", () {}),
-          const Divider(),
-          _buildOption(Icons.logout, "Logout", () {
-             ref.read(authProvider.notifier).logout();
-          }, isDestructive: true),
-        ],
+            // Use your profile_menu_item widget here
+            _buildMenuItem(Icons.history, "Historique des examens", () {}),
+            _buildMenuItem(Icons.edit, "Modifier le profil", () {}),
+            const Divider(indent: 20, endIndent: 20),
+            _buildMenuItem(Icons.logout, "Se déconnecter", () {
+              ref.read(authProvider.notifier).logout();
+            }, color: Colors.red),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color) {
+  Widget _buildStat(String label, String value) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.blue)),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
   }
 
-  Widget _buildOption(IconData icon, String title, VoidCallback onTap, {bool isDestructive = false}) {
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, {Color color = Colors.black}) {
     return ListTile(
-      leading: Icon(icon, color: isDestructive ? Colors.red : Colors.black87),
-      title: Text(title, style: TextStyle(color: isDestructive ? Colors.red : Colors.black87, fontWeight: FontWeight.w500)),
-      trailing: const Icon(Icons.chevron_right, size: 18),
+      leading: Icon(icon, color: color),
+      title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+      trailing: const Icon(Icons.chevron_right, size: 20),
       onTap: onTap,
     );
   }
