@@ -1,48 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/subject.dart';
-import '../models/exercise.dart';
-import '../providers/exercise_provider.dart';
+import '../core/constants/app_colors.dart';
+import '../core/constants/app_spacing.dart';
 import '../widgets/exercise_tile.dart';
-import '../widgets/app_network_image.dart';
-import 'pdf_viewer_page.dart';
+import '../widgets/app_button.dart';
+import '../widgets/progress_indicator.dart';
+import '../widgets/app_empty_state.dart';
 
-class DetailPage extends ConsumerWidget {
+class DetailPage extends ConsumerStatefulWidget {
   final Subject subject;
 
   const DetailPage({super.key, required this.subject});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the selected session (Principale vs Controle)
-    final selectedSession = ref.watch(selectedSessionProvider);
-    
-    // Watch the exercises (PDFs) available for this subject
-    final exercisesAsync = ref.watch(subjectExercisesProvider(subject.id));
+  ConsumerState<DetailPage> createState() => _DetailPageState();
+}
 
+class _DetailPageState extends ConsumerState<DetailPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  String _selectedYear = '2024';
+  String _selectedSession = 'Principale';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
-          // 1. Dynamic Header with Subject Image
+          // App Bar with Image
           SliverAppBar(
-            expandedHeight: 240,
+            expandedHeight: 250,
             pinned: true,
-            stretch: true,
-            backgroundColor: subject.color,
+            backgroundColor: widget.subject.color,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                subject.title, // FIXED: Matches your new model
+                widget.subject.title,
                 style: const TextStyle(
-                  color: Colors.white, 
                   fontWeight: FontWeight.bold,
-                  shadows: [Shadow(blurRadius: 10, color: Colors.black45)],
+                  shadows: [
+                    Shadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                    ),
+                  ],
                 ),
               ),
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  AppNetworkImage(imageUrl: subject.imageUrl), // FIXED: Uses 'url' param
+                  Image.network(
+                    widget.subject.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: widget.subject.color,
+                      );
+                    },
+                  ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -50,7 +77,7 @@ class DetailPage extends ConsumerWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.7),
+                          widget.subject.color.withOpacity(0.8),
                         ],
                       ),
                     ),
@@ -60,117 +87,300 @@ class DetailPage extends ConsumerWidget {
             ),
           ),
 
-          // 2. Session Switcher (Principale / Contrôle)
+          // Content
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Session d'examen",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: SegmentedButton<SessionType>(
-                      style: SegmentedButton.styleFrom(
-                        selectedBackgroundColor: subject.color.withValues(alpha: 0.2),
-                        selectedForegroundColor: subject.color,
-                      ),
-                      segments: const [
-                        ButtonSegment(
-                          value: SessionType.principale, 
-                          label: Text("Principale"),
-                          icon: Icon(Icons.star_outline),
-                        ),
-                        ButtonSegment(
-                          value: SessionType.controle, 
-                          label: Text("Contrôle"),
-                          icon: Icon(Icons.loop),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppSpacing.h24,
+
+                // Progress Section
+                Padding(
+                  padding: AppSpacing.paddingH20,
+                  child: Container(
+                    padding: AppSpacing.padding20,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
                         ),
                       ],
-                      selected: {selectedSession},
-                      onSelectionChanged: (newSelection) {
-                        ref.read(selectedSessionProvider.notifier).state = newSelection.first;
-                      },
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Ton Progrès",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        AppSpacing.h16,
+                        AppProgressIndicator(
+                          progress: 0.65,
+                          label: "Exercices complétés",
+                          color: widget.subject.color,
+                        ),
+                        AppSpacing.h16,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatChip(
+                              "15/23",
+                              "Complétés",
+                              Icons.check_circle,
+                            ),
+                            _buildStatChip(
+                              "8",
+                              "En cours",
+                              Icons.pending,
+                            ),
+                            _buildStatChip(
+                              "350",
+                              "Points XP",
+                              Icons.star,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "Annales disponibles",
-                    style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                ),
+                AppSpacing.h24,
 
-          // 3. The Year Grid
-          exercisesAsync.when(
-            loading: () => const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (err, stack) => SliverFillRemaining(
-              child: Center(child: Text("Erreur de chargement: $err")),
-            ),
-            data: (exercises) {
-              // Filter exercises based on selected session
-              final filtered = exercises.where((e) => e.session == selectedSession).toList();
-              
-              // Get years from the filtered list and sort descending
-              final years = filtered.map((e) => e.year).toSet().toList()
-                ..sort((a, b) => b.compareTo(a));
-
-              if (years.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(
-                    child: Text("Aucun document pour cette session."),
-                  ),
-                );
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final year = years[index];
-                      return ExerciseTile(
-                        year: year,
-                        isCompleted: false, // Future: Connect to user progress
-                        onTap: () {
-                          // Filter for the Exam Paper specifically (not correction)
-                          final target = filtered.firstWhere(
-                            (e) => e.year == year && e.type == DocumentType.exam,
-                            orElse: () => filtered.first,
-                          );
-                          
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => PdfViewerPage(exercise: target),
+                // Filters
+                Padding(
+                  padding: AppSpacing.paddingH20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Filtrer par",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      AppSpacing.h12,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDropdown(
+                              value: _selectedYear,
+                              items: widget.subject.availableYears
+                                  .map((y) => y.toString())
+                                  .toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedYear = value!;
+                                });
+                              },
+                              icon: Icons.calendar_today,
                             ),
-                          );
-                        },
-                      );
-                    },
-                    childCount: years.length,
+                          ),
+                          AppSpacing.w12,
+                          Expanded(
+                            child: _buildDropdown(
+                              value: _selectedSession,
+                              items: widget.subject.sessions,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedSession = value!;
+                                });
+                              },
+                              icon: Icons.event_note,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
-          ),
+                AppSpacing.h24,
 
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                // Tab Bar
+                Container(
+                  margin: AppSpacing.paddingH20,
+                  decoration: BoxDecoration(
+                    color: AppColors.grey100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: widget.subject.color,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: AppColors.textSecondary,
+                    dividerColor: Colors.transparent,
+                    tabs: const [
+                      Tab(text: "Exercices"),
+                      Tab(text: "Corrections"),
+                    ],
+                  ),
+                ),
+                AppSpacing.h16,
+
+                // Tab Content
+                SizedBox(
+                  height: 500,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildExercisesList(),
+                      _buildCorrectionsList(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatChip(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: widget.subject.color, size: 28),
+        AppSpacing.h8,
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        AppSpacing.h4,
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown({
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.grey300),
+      ),
+      child: DropdownButton<String>(
+        value: value,
+        isExpanded: true,
+        underline: const SizedBox(),
+        icon: Icon(Icons.arrow_drop_down, color: widget.subject.color),
+        items: items.map((String item) {
+          return DropdownMenuItem(
+            value: item,
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: AppColors.textSecondary),
+                AppSpacing.w8,
+                Text(item),
+              ],
+            ),
+          );
+        }).toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _buildExercisesList() {
+    // Mock exercises data
+    final exercises = [
+      {
+        'title': 'Exercice 1 - Analyse',
+        'year': _selectedYear,
+        'session': _selectedSession,
+        'isCompleted': true,
+      },
+      {
+        'title': 'Exercice 2 - Algèbre',
+        'year': _selectedYear,
+        'session': _selectedSession,
+        'isCompleted': true,
+      },
+      {
+        'title': 'Exercice 3 - Géométrie',
+        'year': _selectedYear,
+        'session': _selectedSession,
+        'isCompleted': false,
+      },
+      {
+        'title': 'Exercice 4 - Probabilités',
+        'year': _selectedYear,
+        'session': _selectedSession,
+        'isCompleted': false,
+      },
+    ];
+
+    if (exercises.isEmpty) {
+      return AppEmptyState(
+        icon: Icons.assignment_outlined,
+        title: "Aucun exercice",
+        message: "Aucun exercice disponible pour cette sélection",
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      itemCount: exercises.length,
+      itemBuilder: (context, index) {
+        final exercise = exercises[index];
+        return ExerciseTile(
+          title: exercise['title'] as String,
+          year: exercise['year'] as String,
+          session: exercise['session'] as String,
+          isCompleted: exercise['isCompleted'] as bool,
+          onTap: () {
+            _openExercise(exercise);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCorrectionsList() {
+    return AppEmptyState(
+      icon: Icons.check_circle_outline,
+      title: "Corrections",
+      message: "Les corrections seront disponibles après avoir complété l'exercice",
+      action: AppButton(
+        text: "Commencer un exercice",
+        onTap: () {
+          _tabController.animateTo(0);
+        },
+        icon: Icons.play_arrow_rounded,
+      ),
+    );
+  }
+
+  void _openExercise(Map<String, dynamic> exercise) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Ouverture: ${exercise['title']}'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: widget.subject.color,
       ),
     );
   }

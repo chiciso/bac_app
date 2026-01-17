@@ -14,7 +14,7 @@ class FilterSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Important: makes sheet wrap content
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
@@ -27,14 +27,14 @@ class FilterSheet extends StatelessWidget {
               ),
             ),
           ),
-          AppSpacing.s24,
+          AppSpacing.h24,
           const Text(
             "Filter Exercises",
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-          AppSpacing.s16,
+          AppSpacing.h16,
           const Text("Category", style: TextStyle(fontWeight: FontWeight.bold)),
-          AppSpacing.s8,
+          AppSpacing.h8,
           Wrap(
             spacing: 8,
             children: [
@@ -44,7 +44,7 @@ class FilterSheet extends StatelessWidget {
               _FilterChip(label: "Math"),
             ],
           ),
-          AppSpacing.s24,
+          AppSpacing.h24,
           AppButton(
             text: "Apply Filters",
             onTap: () => Navigator.pop(context),

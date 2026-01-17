@@ -1,10 +1,21 @@
 import 'package:flutter_riverpod/legacy.dart';
 
-// Keeps track of the active tab (0 = Home, 1 = Search, 2 = Profile)
-final navigationIndexProvider = StateProvider<int>((ref) => 0);
-
+// Navigation State Notifier
 class NavigationNotifier extends StateNotifier<int> {
   NavigationNotifier() : super(0);
 
-  void setIndex(int index) => state = index;
+  void setIndex(int index) {
+    if (index >= 0 && index <= 2) {
+      state = index;
+    }
+  }
+
+  void goToHome() => state = 0;
+  void goToExplore() => state = 1;
+  void goToProfile() => state = 2;
 }
+
+// Provider for navigation
+final navigationProvider = StateNotifierProvider<NavigationNotifier, int>((ref) {
+  return NavigationNotifier();
+});

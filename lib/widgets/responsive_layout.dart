@@ -12,14 +12,6 @@ class ResponsiveLayout extends StatelessWidget {
     this.desktop,
   });
 
-  // Helper methods to check screen size anywhere in the app
-  static bool isMobile(BuildContext context) =>
-      MediaQuery.of(context).size.width < 600;
-
-  static bool isTablet(BuildContext context) =>
-      MediaQuery.of(context).size.width >= 600 &&
-      MediaQuery.of(context).size.width < 1200;
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(

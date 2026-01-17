@@ -4,7 +4,7 @@ import 'app_network_image.dart';
 
 class SubjectCard extends StatelessWidget {
   final Subject subject;
-  final double progress; // 0.0 to 1.0 (Passed from parent)
+  final double progress;
   final VoidCallback onTap;
 
   const SubjectCard({
@@ -24,7 +24,7 @@ class SubjectCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: subject.color.withValues(alpha: 0.25),
+              color: subject.color.withOpacity(0.25),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -34,33 +34,29 @@ class SubjectCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(32),
           child: Stack(
             children: [
-              // 1. Background Image
               AppNetworkImage(
                 imageUrl: subject.imageUrl,
                 height: double.infinity,
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
-
-              // 2. Gradient Overlay
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.8),
+                    ],
                   ),
                 ),
               ),
-
-              // 3. Progress Ring (Top Right)
               Positioned(
                 top: 20,
                 right: 20,
                 child: _buildProgressRing(),
               ),
-
-              // 4. Content (Bottom)
               Positioned(
                 bottom: 25,
                 left: 20,
@@ -91,7 +87,10 @@ class SubjectCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         const Text(
                           "+XP",
-                          style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.amber,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -111,7 +110,7 @@ class SubjectCard extends StatelessWidget {
       height: 50,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
+        color: Colors.black.withOpacity(0.5),
         shape: BoxShape.circle,
       ),
       child: Stack(
@@ -125,7 +124,11 @@ class SubjectCard extends StatelessWidget {
           ),
           Text(
             "${(progress * 100).toInt()}%",
-            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

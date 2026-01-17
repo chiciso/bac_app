@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
-  final bool showBackButton;
+  final Widget? leading;
+  final bool centerTitle;
   final Color? backgroundColor;
 
   const CustomAppBar({
     super.key,
     required this.title,
     this.actions,
-    this.showBackButton = true,
+    this.leading,
+    this.centerTitle = true,
     this.backgroundColor,
   });
 
@@ -22,20 +25,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         style: const TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 20,
-          color: Colors.black,
         ),
       ),
-      centerTitle: true,
+      centerTitle: centerTitle,
       backgroundColor: backgroundColor ?? Colors.transparent,
       elevation: 0,
-      automaticallyImplyLeading: false, // We control the back button manually
-      leading: showBackButton
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black, size: 20),
-              onPressed: () => Navigator.maybePop(context),
-            )
-          : null,
+      leading: leading,
       actions: actions,
+      foregroundColor: AppColors.textPrimary,
     );
   }
 

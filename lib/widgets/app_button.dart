@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
 
 enum AppButtonStyle { primary, outline, text }
 
@@ -22,12 +23,10 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isOutline = style == AppButtonStyle.outline;
     final isText = style == AppButtonStyle.text;
     
-    // Determine colors based on theme and style
-    final primaryColor = color ?? theme.primaryColor;
+    final primaryColor = color ?? AppColors.primary;
     final contentColor = (isOutline || isText) ? primaryColor : Colors.white;
 
     return SizedBox(
@@ -45,12 +44,29 @@ class AppButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: Center(
             child: isLoading 
-              ? SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: contentColor))
+              ? SizedBox(
+                  height: 24, 
+                  width: 24, 
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2, 
+                    color: contentColor,
+                  ),
+                )
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (icon != null) ...[Icon(icon, color: contentColor, size: 20), const SizedBox(width: 8)],
-                    Text(text, style: TextStyle(color: contentColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                    if (icon != null) ...[
+                      Icon(icon, color: contentColor, size: 20),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      text,
+                      style: TextStyle(
+                        color: contentColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ],
                 ),
           ),
